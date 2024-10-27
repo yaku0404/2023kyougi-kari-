@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV to 2D Array</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+        .cell-green {
+            background-color: lightgreen; /* 0の場合 */
+        }
+        .cell-blue {
+            background-color: lightblue; /* 1の場合 */
+        }
+        .cell-brown {
+            background-color: burlywood; /* 2の場合 */
+        }
+    </style>
+</head>
+<body>
+    <h1>CSVファイルを読み込んで二次元配列に変換</h1>
+    <input type="file" id="csvFileInput" accept=".csv" />
+    <pre id="output"></pre>
+    <div id="tableOutput"></div>
+
+    <script>
+        document.getElementById('csvFileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csvData = e.target.result;
+                const rows = csvData.split(/\r?\n/).filter(row => row.trim() !== '');
+                const result = rows.map(row => row.split(',').map(cell => cell.trim()));
+
+                // a, b の前に「0,」を付ける
+                const modifiedResult = result.map(row => 
+                    row.map(cell => {
+                        if (cell === 'a' || cell === 'b') {
+                            return '0,' + cell; // aとbの前に「0,」を付ける
+                        }
+                        // 数字の場合は「、」を付ける
+                        if (!isNaN(cell) && cell !== '') {
+                            return cell + ',';
+                        }
+                        return cell;
+                    })
+                );
+
+                // 結果を表示
+                document.getElementById('output').textContent = JSON.stringify(modifiedResult, null, 2);
+                displayTable(modifiedResult);
+            };
+
+            reader.onerror = function() {
+                console.error("ファイルの読み込みに失敗しました。");
+                alert("ファイルの読み込みに失敗しました。");
+            };
+
+            reader.readAsText(file);
+        });
+
+        function displayTable(data) {
+            const table = document.createElement('table');
+            data.forEach((row, rowIndex) => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement(rowIndex === 0 ? 'th' : 'td'); // 最初の行はヘッダー
+                    td.textContent = cell;
+
+                    // 背景色を設定
+                    if (cell.startsWith('0,' )) {
+                        td.classList.add('cell-green');
+                    } else if (cell.startsWith('1,' )) {
+                        td.classList.add('cell-blue');
+                    } else if (cell.startsWith('2,' )) {
+                        td.classList.add('cell-brown');
+                    }
+
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+            const tableOutput = document.getElementById('tableOutput');
+            tableOutput.innerHTML = ''; // 以前のテーブルをクリア
+            tableOutput.appendChild(table);
+        }
+    </script>
+</body>
+</html>
